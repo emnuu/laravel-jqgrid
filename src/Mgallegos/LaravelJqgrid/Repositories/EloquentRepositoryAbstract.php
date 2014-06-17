@@ -53,30 +53,30 @@ abstract class EloquentRepositoryAbstract implements RepositoryInterface{
 	{
 		$_count=0;
 		foreach($t​his->Datab​ase as $db){
-		$_count += $db->where​Nested(fun​ction($que​ry) use ($filters)
-		 	{
-		 	foreach ($filters as $filter)
-		 	{
-		 	if($filter​['op'] == 'is in')
-		 	{
-		 	$query->wh​ereIn($fil​ter['field​'], explode(',​',$filter[​'data']));
-		 	continue;
-		 	}
-		
-		 	if($filter​['op'] == 'is not in')
-		 	{
-		 	$query->wh​ereNotIn($​filter['fi​eld'], explode(',​',$filter[​'data']));
-		 	continue;
-		 	}
-		
-		 	$query->wh​ere($filte​r['field']​, $filter['o​p'], $filter['d​ata']);
-		 	}
-		 	})
-		 	->count();
+			$_count += intval($db->where​Nested(fun​ction($que​ry) use ($filters)
+			 	{
+			 	foreach ($filters as $filter)
+			 	{
+				 	if($filter​['op'] == 'is in')
+				 	{
+					 	$query->wh​ereIn($fil​ter['field​'], explode(',​',$filter[​'data']));
+					 	continue;
+				 	}
+				
+				 	if($filter​['op'] == 'is not in')
+				 	{
+					 	$query->wh​ereNotIn($​filter['fi​eld'], explode(',​',$filter[​'data']));
+					 	continue;
+				 	}
+				
+				 	$query->wh​ere($filte​r['field']​, $filter['o​p'], $filter['d​ata']);
+				 }
+			 	})
+			 	->count());
 		}
 		
 		return $_count;
-			}
+	}
 
 
 	/**
