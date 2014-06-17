@@ -169,9 +169,9 @@ abstract class EloquentRepositoryAbstract implements RepositoryInterface{
 						$query->where($filter['field'], $filter['op'], $filter['data']);
 					}
 				})
-				->take($limit)
-				->skip($offset)
-				->orderByRaw($orderByRaw)
+				//->take($limit)
+				//->skip($offset)
+				//->orderByRaw($orderByRaw)
 				->get($this->visibleColumns);				
 			}
 			if(!is_array($rows))
