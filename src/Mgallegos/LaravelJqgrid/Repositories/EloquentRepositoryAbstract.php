@@ -49,34 +49,36 @@ abstract class EloquentRepositoryAbstract implements RepositoryInterface{
 	 * @return integer
 	 *  Total number of rows
 	 */
+	
 	public function getTotalNumberOfRows(array $filters = array())
 	{
-		$_count=0;
-		foreach($t​his->Datab​ase as $db){
-			$_count += intval($db->where​Nested(fun​ction($que​ry) use ($filters)
-			 	{
-			 	foreach ($filters as $filter)
-			 	{
-				 	if($filter​['op'] == 'is in')
-				 	{
-					 	$query->wh​ereIn($fil​ter['field​'], explode(',​',$filter[​'data']));
-					 	continue;
-				 	}
-				
-				 	if($filter​['op'] == 'is not in')
-				 	{
-					 	$query->wh​ereNotIn($​filter['fi​eld'], explode(',​',$filter[​'data']));
-					 	continue;
-				 	}
-				
-				 	$query->wh​ere($filte​r['field']​, $filter['o​p'], $filter['d​ata']);
-				 }
-			 	})
-			 	->count());
-		}
-		
-		return $_count;
+	    $_count=0;
+	    foreach($this->Database as $db){
+	        $_count += intval($db->whereNested(function($query) use ($filters)
+	        {
+	            foreach ($filters as $filter)
+	            {
+	                if($filter['op'] == 'is in')
+	                {
+	                    $query->whereIn($filter['field​'], explode(',​',$filter['data']));
+	                    continue;
+	                }
+	
+	                if($filter['op'] == 'is not in')
+	                {
+	                    $query->whereNotIn($filter['fi​eld'], explode(',​',$filter['data']));
+	                    continue;
+	                }
+	
+	                $query->where($filter['field'], $filter['o​p'], $filter['d​ata']);
+	            }
+	        })->count());
+	    }
+	
+	    return $_count;
 	}
+
+
 
 
 	/**
@@ -100,94 +102,94 @@ abstract class EloquentRepositoryAbstract implements RepositoryInterface{
 	 *  An array of array, each array will have the data of a row.
 	 *  Example: array(array('row 1 col 1','row 1 col 2'), array('row 2 col 1','row 2 col 2'))
 	 */
+	
 	public function getRows($limit, $offset, $orderBy = null, $sord = null, array $filters = array())
 	{
-		if(!is_null($orderBy) || !is_null($sord))
-		{
-			$this->orderBy = array(array($orderBy, $sord));
-		}
-
-		if($limit == 0)
-		{
-			$limit = 1;
-		}
-
-		$orderByRaw = array();
-
-		foreach ($this->orderBy as $orderBy)
-		{
-			array_push($orderByRaw, implode(' ',$orderBy));
-		}
-
-		$orderByRaw = implode(',',$orderByRaw);						
-
-		$result = array();
-		
-		foreach($this->Database as $db){
-		
-			if( count($this->Database) == 1 ){
-				$rows = $db->whereNested(function($query) use ($filters)
-				{
-					foreach ($filters as $filter)
-					{
-						if($filter['op'] == 'is in')
-						{
-							$query->whereIn($filter['field'], explode(',',$filter['data']));
-							continue;
-						}
-
-						if($filter['op'] == 'is not in')
-						{
-							$query->whereNotIn($filter['field'], explode(',',$filter['data']));
-							continue;
-						}
-
-						$query->where($filter['field'], $filter['op'], $filter['data']);
-					}
-				})
-				->take($limit)
-				->skip($offset)
-				->orderByRaw($orderByRaw)
-				->get($this->visibleColumns);	
-			}else{
-				$rows = $db->whereNested(function($query) use ($filters)
-				{
-					foreach ($filters as $filter)
-					{
-						if($filter['op'] == 'is in')
-						{
-							$query->whereIn($filter['field'], explode(',',$filter['data']));
-							continue;
-						}
-
-						if($filter['op'] == 'is not in')
-						{
-							$query->whereNotIn($filter['field'], explode(',',$filter['data']));
-							continue;
-						}
-
-						$query->where($filter['field'], $filter['op'], $filter['data']);
-					}
-				})
-				//->take($limit)
-				//->skip($offset)
-				//->orderByRaw($orderByRaw)
-				->get($this->visibleColumns);				
-			}
-			if(!is_array($rows))
-			{
-				$rows = $rows->toArray();
-			}
-
-			foreach ($rows as &$row)
-			{	
-				$row = array_values((array) $row);
-			}
-			
-			$result = array_merge($result, $rows);
-		}
-		
-		return $result;
+	    if(!is_null($orderBy) || !is_null($sord))
+	    {
+	        $this->orderBy = array(array($orderBy, $sord));
+	    }
+	
+	    if($limit == 0)
+	    {
+	        $limit = 1;
+	    }
+	
+	    $orderByRaw = array();
+	
+	    foreach ($this->orderBy as $orderBy)
+	    {
+	        array_push($orderByRaw, implode(' ',$orderBy));
+	    }
+	
+	    $orderByRaw = implode(',',$orderByRaw);
+	
+	    $result = array();
+	
+	    foreach($this->Database as $db){
+	
+	        if( count($this->Database) == 1 ){
+	            $rows = $db->whereNested(function($query) use ($filters)
+	            {
+	                foreach ($filters as $filter)
+	                {
+	                    if($filter['op'] == 'is in')
+	                    {
+	                        $query->whereIn($filter['field'], explode(',',$filter['data']));
+	                        continue;
+	                    }
+	
+	                    if($filter['op'] == 'is not in')
+	                    {
+	                        $query->whereNotIn($filter['field'], explode(',',$filter['data']));
+	                        continue;
+	                    }
+	
+	                    $query->where($filter['field'], $filter['op'], $filter['data']);
+	                }
+	            })
+	                ->take($limit)
+	                ->skip($offset)
+	                ->orderByRaw($orderByRaw)
+	                ->get($this->visibleColumns);
+	        }else{
+	            $rows = $db->whereNested(function($query) use ($filters)
+	            {
+	                foreach ($filters as $filter)
+	                {
+	                    if($filter['op'] == 'is in')
+	                    {
+	                        $query->whereIn($filter['field'], explode(',',$filter['data']));
+	                        continue;
+	                    }
+	
+	                    if($filter['op'] == 'is not in')
+	                    {
+	                        $query->whereNotIn($filter['field'], explode(',',$filter['data']));
+	                        continue;
+	                    }
+	
+	                    $query->where($filter['field'], $filter['op'], $filter['data']);
+	                }
+	            })
+			//->take($limit)
+			//->skip($offset)
+			//->orderByRaw($orderByRaw)
+	                ->get($this->visibleColumns);
+	        }
+	        if(!is_array($rows))
+	        {
+	            $rows = $rows->toArray();
+	        }
+	
+	        foreach ($rows as &$row)
+	        {
+	            $row = array_values((array) $row);
+	        }
+	
+	        $result = array_merge($result, $rows);
+	    }
+	
+	    return $result;
 	}
-
 }
