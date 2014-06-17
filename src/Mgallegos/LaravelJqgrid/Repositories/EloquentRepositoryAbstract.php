@@ -18,7 +18,7 @@ abstract class EloquentRepositoryAbstract implements RepositoryInterface{
 	 * @var Illuminate\Database\Eloquent\Model or Illuminate\Database\Query 
 	 *
 	 */
-	protected $Database;
+	protected $Database = array();
 	
 	/**
 	 * Visible columns
@@ -51,27 +51,32 @@ abstract class EloquentRepositoryAbstract implements RepositoryInterface{
 	 */
 	public function getTotalNumberOfRows(array $filters = array())
 	{
-		return  intval($this->Database->whereNested(function($query) use ($filters)
-		{
-			foreach ($filters as $filter)
-			{
-				if($filter['op'] == 'is in')
-				{
-					$query->whereIn($filter['field'], explode(',',$filter['data']));
-					continue;
-				}
-				 
-				if($filter['op'] == 'is not in')
-				{
-					$query->whereNotIn($filter['field'], explode(',',$filter['data']));
-					continue;
-				}
-				 
-				$query->where($filter['field'], $filter['op'], $filter['data']);
+		$_count=0;
+		foreach($t​his->Datab​ase as $db){
+		$_count += $db->where​Nested(fun​ction($que​ry) use ($filters)
+		 	{
+		 	foreach ($filters as $filter)
+		 	{
+		 	if($filter​['op'] == 'is in')
+		 	{
+		 	$query->wh​ereIn($fil​ter['field​'], explode(',​',$filter[​'data']));
+		 	continue;
+		 	}
+		
+		 	if($filter​['op'] == 'is not in')
+		 	{
+		 	$query->wh​ereNotIn($​filter['fi​eld'], explode(',​',$filter[​'data']));
+		 	continue;
+		 	}
+		
+		 	$query->wh​ere($filte​r['field']​, $filter['o​p'], $filter['d​ata']);
+		 	}
+		 	})
+		 	->count();
+		}
+		
+		return $_count;
 			}
-		})
-		->count());
-	}
 
 
 	/**
@@ -101,56 +106,88 @@ abstract class EloquentRepositoryAbstract implements RepositoryInterface{
 		{
 			$this->orderBy = array(array($orderBy, $sord));
 		}
-		
+
 		if($limit == 0)
 		{
 			$limit = 1;
 		}
-		 
+
 		$orderByRaw = array();
 
 		foreach ($this->orderBy as $orderBy)
 		{
 			array_push($orderByRaw, implode(' ',$orderBy));
 		}
-		 
+
 		$orderByRaw = implode(',',$orderByRaw);						
+
+		$result = array();
 		
-		$rows = $this->Database->whereNested(function($query) use ($filters)
-		{
-			foreach ($filters as $filter)
-			{
-				if($filter['op'] == 'is in')
+		foreach($this->Database as $db){
+		
+			if( count($this->Database) == 1 ){
+				$rows = $db->whereNested(function($query) use ($filters)
 				{
-					$query->whereIn($filter['field'], explode(',',$filter['data']));
-					continue;
-				}
-					
-				if($filter['op'] == 'is not in')
+					foreach ($filters as $filter)
+					{
+						if($filter['op'] == 'is in')
+						{
+							$query->whereIn($filter['field'], explode(',',$filter['data']));
+							continue;
+						}
+
+						if($filter['op'] == 'is not in')
+						{
+							$query->whereNotIn($filter['field'], explode(',',$filter['data']));
+							continue;
+						}
+
+						$query->where($filter['field'], $filter['op'], $filter['data']);
+					}
+				})
+				->take($limit)
+				->skip($offset)
+				->orderByRaw($orderByRaw)
+				->get($this->visibleColumns);	
+			}else{
+				$rows = $db->whereNested(function($query) use ($filters)
 				{
-					$query->whereNotIn($filter['field'], explode(',',$filter['data']));
-					continue;
-				}
-					
-				$query->where($filter['field'], $filter['op'], $filter['data']);
+					foreach ($filters as $filter)
+					{
+						if($filter['op'] == 'is in')
+						{
+							$query->whereIn($filter['field'], explode(',',$filter['data']));
+							continue;
+						}
+
+						if($filter['op'] == 'is not in')
+						{
+							$query->whereNotIn($filter['field'], explode(',',$filter['data']));
+							continue;
+						}
+
+						$query->where($filter['field'], $filter['op'], $filter['data']);
+					}
+				})
+				->take($limit)
+				->skip($offset)
+				->orderByRaw($orderByRaw)
+				->get($this->visibleColumns);				
 			}
-		})
-		->take($limit)
-		->skip($offset)
-		->orderByRaw($orderByRaw)
-		->get($this->visibleColumns);				
+			if(!is_array($rows))
+			{
+				$rows = $rows->toArray();
+			}
+
+			foreach ($rows as &$row)
+			{	
+				$row = array_values((array) $row);
+			}
+			
+			$result = array_merge($result, $rows);
+		}
 		
-		if(!is_array($rows))
-		{
-			$rows = $rows->toArray();
-		}
-		 
-		foreach ($rows as &$row)
-		{	
-			$row = array_values((array) $row);
-		}
-		 
-		return $rows;
+		return $result;
 	}
 
 }
